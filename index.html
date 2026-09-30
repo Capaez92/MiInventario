@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión y Control de Inventarios</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SDK de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex">
+      <div>
+        <div class="p-5 flex items-center gap-3 border-b border-slate-800">
+          <div class="bg-indigo-600 p-2 rounded-lg text-white">
+            <i data-lucide="boxes" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-white leading-tight">Inventory Control</h1>
+            <p class="text-xs text-slate-600">Control de Stock en Nube</p>
+          </div>
+        </div>
+
+
+        <!-- PANTALLA DE INICIO DE SESIÓN (LOGIN) -->
+<div id="pantalla-login" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl text-center">
+    
+    <!-- Logo / Imagen del programa y Nombre -->
+    <div class="flex flex-col items-center space-y-3">
+      <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+        <!-- Puedes cambiar el icono de Lucide por la ruta de tu imagen <img src="tu-logo.png" class="w-10 h-10 object-contain"> -->
+        <i data-lucide="box" class="w-8 h-8"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800">InventoryHub</h1>
+        <p class="text-xs text-slate-400">Control de Stock en Nube</p>
+      </div>
+    </div>
+
+    <!-- Formulario de Ingreso -->
+    <form id="form-login" onsubmit="procesarLogin(event)" class="space-y-4 text-left">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
+        <input type="text" id="login-usuario" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ingresa tu usuario">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
+        <input type="password" id="login-clave" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••">
+      </div>
+
+      <!-- Botones de Ingresar y Cancelar -->
+      <div class="flex items-center gap-3 pt-2">
+        <button type="button" onclick="limpiarLogin()" class="w-1/2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition">
+          Cancelar
+        </button>
+        <button type="submit" class="w-1/2 px-4 py-2.5 text-sm bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+          Ingresar
+        </button>
+        <button onclick="abrirModalCrear()" id="btn-tab-productos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="User-round-plus" class="w-5 h-5"></i>
+            Crear Usuario
+          </button>
+      </div>
+    </form>
+    
+  </div>
+</div>
+<!-- Agrega esto en tu menú lateral -->
+
+           <button onclick="abrirModalClave()" id="btn-tab-productos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="key" class="w-5 h-5"></i>
+            Cambiar Clave
+          </button>
+        <nav class="p-4 space-y-1">
+          <button onclick="cambiarTab('dashboard')" id="btn-tab-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-indigo-600 text-white">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            Tablero Principal
+          </button>
+          <button onclick="cambiarTab('productos')" id="btn-tab-productos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            Productos
+          </button>
+          <button onclick="cambiarTab('movimientos')" id="btn-tab-movimientos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+            Movimientos / Kardex
+          </button>
+            <button onclick="cambiarTab('proveedores')" id="btn-tab-movimientos" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="package-search" class="w-5 h-5"></i>
+            Proveedores
+          </button>
+        </nav>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+        Conectado a PostgreSQL (Supabase)
+      </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+      <!-- Header -->
+      <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-10">
+        <h2 id="titulo-seccion" class="text-xl font-bold text-slate-800">Tablero Principal</h2>
+        <div class="flex items-center gap-3">
+            <button onclick="abrirModalProveedor()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition shadow-sm">
+            <i data-lucide="package-plus" class="w-4 h-4"></i>
+            Nuevo Proveedor
+          </button>
+          <button onclick="abrirModalProducto()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition shadow-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nuevo Producto
+          </button>
+          <button onclick="abrirModalMovimiento()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition shadow-sm">
+            <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
+            Entrada / Salida
+          </button>
+            <button onclick="abrirModalCerrarSesion()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition shadow-sm">
+            <i data-lucide="x" class="w-4 h-4"></i>
+            Cerrar Sesión
+          </button>
+        </div>
+      </header>
+
+      <div class="p-6 max-w-7xl mx-auto w-full space-y-6">
+        <!-- VISTA: DASHBOARD -->
+        <div id="vista-dashboard" class="space-y-6">
+          <!-- Tarjetas KPI -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase">Total Productos</p>
+                <h3 id="kpi-total-productos" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+              </div>
+              <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <i data-lucide="package" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase">Valor Inventario</p>
+                <h3 id="kpi-valor-inventario" class="text-2xl font-bold text-slate-800 mt-1">$0.00</h3>
+              </div>
+              <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase">Alertas Bajo Stock</p>
+                <h3 id="kpi-bajo-stock" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+              </div>
+              <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase">Total Movimientos</p>
+                <h3 id="kpi-total-movimientos" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+              </div>
+              <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                <i data-lucide="activity" class="w-6 h-6"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de Bajo Stock -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <i data-lucide="alert-circle" class="w-5 h-5 text-amber-500"></i>
+              Productos que requieren reabastecimiento
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="p-3">SKU</th>
+                    <th class="p-3">Producto</th>
+                    <th class="p-3">Stock Actual</th>
+                    <th class="p-3">Mínimo Requerido</th>
+                    <th class="p-3">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-bajo-stock" class="divide-y divide-slate-100">
+                  <tr><td colspan="5" class="p-4 text-center text-slate-400">Cargando datos...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA: PRODUCTOS -->
+        <div id="vista-productos" class="hidden space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
+              <input type="text" id="buscar-producto" oninput="filtrarProductos()" placeholder="Buscar por SKU o Nombre..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <select id="filtro-categoria" onchange="filtrarProductos()" class="bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="p-4">SKU</th>
+                    <th class="p-4">Producto</th>
+                    <th class="p-4">Categoría</th>
+                    <th class="p-4">Precio</th>
+                    <th class="p-4">Stock</th>
+                    <th class="p-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-productos" class="divide-y divide-slate-100">
+                  <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando catálogo...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA: PROVEEDORES -->
+        <div id="vista-proveedores" class="hidden space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
+              <input type="text" id="buscar-proveedor" oninput="filtrarProveedores()" placeholder="Buscar por nombre o ID..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <select id="filtro-categoria" onchange="filtrarProveedores()" class="bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="p-4">ID</th>
+                    <th class="p-4">Nombre</th>
+                    <th class="p-4">Contacto</th>
+                    <th class="p-4">Teléfono</th>
+                    <th class="p-4">Email</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-proveedores-body">
+                <tr>
+                <td colspan="6" class="p-4 text-center text-slate-400">Cargando proveedores...</td>
+              </tr>
+              </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA: MOVIMIENTOS -->
+        <div id="vista-movimientos" class="hidden space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-200 font-bold text-slate-800">Historial de Entradas y Salidas (Kardex)</div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="p-4">Fecha/Hora</th>
+                    <th class="p-4">Tipo</th>
+                    <th class="p-4">Producto</th>
+                    <th class="p-4">Cantidad</th>
+                    <th class="p-4">Motivo / Notas</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-movimientos" class="divide-y divide-slate-100">
+                  <tr><td colspan="5" class="p-4 text-center text-slate-400">Cargando historial...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: CREAR/EDITAR PRODUCTO -->
+  <div id="modal-producto" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <h3 id="modal-producto-titulo" class="text-lg font-bold text-slate-800">Nuevo Producto</h3>
+      <form id="form-producto" onsubmit="guardarProducto(event)" class="space-y-3">
+        <input type="hidden" id="prod-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">SKU / Código</label>
+          <input type="text" id="prod-sku" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Producto</label>
+          <input type="text" id="prod-nombre" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría</label>
+          <select id="prod-categoria" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio ($)</label>
+            <input type="number" step="0.01" id="prod-precio" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Stock Mínimo</label>
+            <input type="number" id="prod-min-stock" value="5" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Stock Inicial</label>
+          <input type="number" id="prod-stock" value="0" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModales()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR/EDITAR PROVEEDOR -->
+  <div id="modal-proveedor" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <h3 id="modal-proveedor-titulo" class="text-lg font-bold text-slate-800">Nuevo Proveedor</h3>
+      <form id="form-proveedor" onsubmit="guardarProveedor(event)" class="space-y-3">
+        <input type="hidden" id="prov-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">ID</label>
+          <input type="text" id="prov-id" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre</label>
+          <input type="text" id="prov-nombre" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Contacto</label>
+          <input type="text" id="prov-contacto" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Telefono</label>
+            <input type="number" step="0.01" id="prov-telefono" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+            <input type="email" id="prov-email" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModales()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- MODAL: CREAR/ USUARIO -->
+  <div id="modal-crea" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <h3 id="modal-crear-usuario" class="text-lg font-bold text-slate-800">Crear Usuario </h3>
+      <form id="form-crear" onsubmit="guardarCrear(event)" class="space-y-3">
+        <input type="hidden" id="crea-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
+          <input type="text" id="crea-usuario" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre y Apellido</label>
+          <input type="text" id="crea-nombre" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Cedula</label>
+          <input type="text" id="crea-cedula" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Telefono</label>
+            <input type="text" id="crea-telefono" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+            <input type="email" id="crea-email" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+        <!-- Inayon daytoy a kampo para iti Clave -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Clave</label>
+          <input type="password" id="crea-clave" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModales()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CAMBIAR CONTRASEÑA -->
+<div id="modalClave" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+    <h3 class="text-lg font-bold text-slate-800">Cambiar Contraseña</h3>
+    
+    <form id="form-cambiar-clave" onsubmit="procesarCambioClave(event)" class="space-y-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Usuario</label>
+        <input type="text" id="pass-usuario" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ingresa tu usuario">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña Actual</label>
+        <input type="password" id="pass-actual" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Nueva Contraseña</label>
+        <input type="password" id="pass-nueva" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••">
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModales()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">Actualizar Clave</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <!-- MODAL: MOVIMIENTO (ENTRADA / SALIDA) -->
+  <div id="modal-movimiento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-800">Registrar Entrada / Salida</h3>
+      <form onsubmit="guardarMovimiento(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Movimiento</label>
+          <select id="mov-tipo" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="ENTRADA">ENTRADA (+ Stock)</option>
+            <option value="SALIDA">SALIDA (- Stock)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Producto</label>
+          <select id="mov-producto" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Cantidad</label>
+          <input type="number" id="mov-cantidad" min="1" value="1" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Motivo / Notas</label>
+          <input type="text" id="mov-motivo" placeholder="Ej: Compra a proveedor, Venta cliente..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="cerrarModales()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE CERRAR SESIÓN -->
+<div id="modalCerrarSesion" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl">
+    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+      <i data-lucide="log-out" class="w-6 h-6"></i>
+    </div>
+    
+    <div>
+      <h3 class="text-lg font-bold text-slate-800">Cerrar Sesión</h3>
+      <p class="text-xs text-slate-500 mt-1">¿Estás seguro de que deseas salir del sistema?</p>
+    </div>
+
+    <div class="flex justify-center gap-3 pt-2">
+      <button type="button" onclick="cerrarModales()" class="w-1/2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition">
+        Cancelar
+      </button>
+      <button type="button" onclick="ejecutarCierreSesion()" class="w-1/2 px-4 py-2 text-sm bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition shadow-md shadow-red-100">
+        Sí, Salir
+      </button>
+    </div>
+  </div>
+</div>
+  
+
+
+  <!-- SCRIPT CONEXIÓN SUPABASE Y LÓGICA DE NEGOCIO -->
+  <script>
+    // Configuración de credenciales Supabase
+    const SUPABASE_URL = 'https://ozdyivyhppvjgqkpqncr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96ZHlpdnlocHB2amdxa3BxbmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTgyMzMsImV4cCI6MjEwNjMzNDIzM30.tIgxmifjpv3jPx5LdeyWSARpb-Wvsp7flfWDmcOrl7U';
+
+    // Se crea la conexión correctamente usando createClient
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ==========================================
+    // 2. VARIABLES GLOBALES DE DATOS
+    // ==========================================
+    let productosGlobal = [];
+    let categoriasGlobal = [];
+    let proveedoresGlobal = []; // <-- Variable global para almacenar los proveedores cargados
+
+    // ==========================================
+    // 3. INICIALIZACIÓN DE LA APLICACIÓN
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      inicializarApp();
+    });
+
+    async function inicializarApp() {
+      await cargarCategorias();
+      await cargarProductos();
+      await cargarMovimientos();
+      await cargarProveedores(); // <-- Carga inicial de proveedores
+      console.log("✅ Conectado a Supabase correctamente.");
+    }
+
+    // ==========================================
+    // 4. FUNCIONES DE CARGA DE DATOS (GET)
+    // ==========================================
+    
+    // Carga las categorías para los selectores
+    async function cargarCategorias() {
+      const { data, error } = await db.from('categorias').select('*').order('nombre');
+      if (error) return console.error('Error al cargar categorias:', error);
+      
+      categoriasGlobal = data;
+      const selectFiltro = document.getElementById('filtro-categoria');
+      const selectForm = document.getElementById('prod-categoria');
+      
+      selectFiltro.innerHTML = '<option value="">Todas las categorías</option>';
+      selectForm.innerHTML = '';
+
+      data.forEach(c => {
+        selectFiltro.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+        selectForm.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+      });
+    }
+
+    // Carga los productos desde Supabase y actualiza la tabla y KPIs
+    async function cargarProductos() {
+      const { data, error } = await db.from('productos').select('*, categorias(nombre)').order('id', { ascending: false });
+      if (error) return console.error('Error al cargar productos:', error);
+
+      productosGlobal = data;
+      renderizarProductos(data);
+      actualizarKPIs(data);
+    }
+
+    // Carga los proveedores desde Supabase, los guarda en su variable global y los pinta
+    async function cargarProveedores() { 
+      const { data, error } = await db.from('proveedores').select('*').order('nombre');
+      if (error) return console.error('Error al cargar proveedores:', error);
+
+      proveedoresGlobal = data;     // <-- Guardamos en la variable global
+      renderizarProveedores(data);  // <-- Pintamos la tabla y llenamos selectores si aplica
+    }
+
+    // Carga el historial de movimientos o kardex
+    async function cargarMovimientos() {
+      const { data, error } = await db.from('movimientos').select('*, productos(nombre)').order('created_at', { ascending: false });
+      if (error) return console.error('Error al cargar movimientos:', error);
+
+      const tbody = document.getElementById('tabla-movimientos');
+      document.getElementById('kpi-total-movimientos').innerText = data.length;
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin movimientos registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(m => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 text-xs text-slate-500">${new Date(m.created_at).toLocaleString()}</td>
+          <td class="p-4">
+            <span class="px-2 py-1 text-xs font-semibold rounded-lg ${m.tipo === 'ENTRADA' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+              ${m.tipo}
+            </span>
+          </td>
+          <td class="p-4 font-medium">${m.productos ? m.productos.nombre : 'Producto Eliminado'}</td>
+          <td class="p-4 font-bold ${m.tipo === 'ENTRADA' ? 'text-emerald-600' : 'text-red-600'}">
+            ${m.tipo === 'ENTRADA' ? '+' : '-'}${m.cantidad}
+          </td>
+          <td class="p-4 text-slate-500 text-xs">${m.motivo || '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ==========================================
+    // 5. FUNCIONES DE RENDERIZADO (HTML DINÁMICO)
+    // ==========================================
+
+    // Dibuja la tabla de productos y llena el selector del módulo de movimientos
+    function renderizarProductos(productos) {
+      const tbody = document.getElementById('tabla-productos');
+      const selectMov = document.getElementById('mov-producto');
+      
+      selectMov.innerHTML = '';
+
+      if (productos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">No hay productos guardados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = productos.map(p => {
+        selectMov.innerHTML += `<option value="${p.id}">${p.nombre} (Stock: ${p.stock})</option>`;
+        const enAlerta = p.stock <= p.min_stock;
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-mono text-xs text-slate-500">${p.sku}</td>
+            <td class="p-4 font-medium text-slate-800">${p.nombre}</td>
+            <td class="p-4 text-slate-500">${p.categorias ? p.categorias.nombre : '-'}</td>
+            <td class="p-4 font-semibold text-slate-700">$${Number(p.precio).toLocaleString('es-CO')}</td>
+            <td class="p-4">
+              <span class="px-2 py-1 text-xs font-bold rounded-lg ${enAlerta ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}">
+                ${p.stock} unids ${enAlerta ? '⚠️️' : ''}
+              </span>
+            </td>
+            <td class="p-4 text-right space-x-2">
+              <button onclick="editarProducto(${p.id})" class="p-1 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+              <button onclick="eliminarProducto(${p.id})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // Dibuja la tabla de proveedores en pantalla (idéntico a productos)
+    function renderizarProveedores(proveedores) {
+      const tbody = document.getElementById('tabla-proveedores-body'); // Asegúrate de que tu tabla en HTML tenga este ID
+      if (!tbody) return;
+
+      if (proveedores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">No hay proveedores guardados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = proveedores.map(prov => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-mono text-xs text-slate-500">${prov.id}</td>
+          <td class="p-4 font-medium text-slate-800">${prov.nombre}</td>
+          <td class="p-4 text-slate-600">${prov.contacto || '-'}</td>
+          <td class="p-4 text-slate-600">${prov.telefono || '-'}</td>
+          <td class="p-4 text-slate-600">${prov.email || '-'}</td>
+          <td class="p-4 text-right space-x-2">
+            <button onclick="editarProveedor(${prov.id})" class="p-1 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+            <button onclick="eliminarProveedor(${prov.id})" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // Actualiza los indicadores principales (KPIs) del tablero
+    function actualizarKPIs(productos) {
+      document.getElementById('kpi-total-productos').innerText = productos.length;
+
+      const valorTotal = productos.reduce((acc, p) => acc + (p.precio * p.stock), 0);
+      document.getElementById('kpi-valor-inventario').innerText = `$${valorTotal.toLocaleString('es-CO')}`;
+
+      const bajoStock = productos.filter(p => p.stock <= p.min_stock);
+      document.getElementById('kpi-bajo-stock').innerText = bajoStock.length;
+
+      const tbodyBajoStock = document.getElementById('tabla-bajo-stock');
+      if (bajoStock.length === 0) {
+        tbodyBajoStock.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Todo el stock está en niveles óptimos 👍</td></tr>';
+      } else {
+        tbodyBajoStock.innerHTML = bajoStock.map(p => `
+          <tr>
+            <td class="p-3 font-mono text-xs text-slate-500">${p.sku}</td>
+            <td class="p-3 font-medium">${p.nombre}</td>
+            <td class="p-3 font-bold text-amber-600">${p.stock}</td>
+            <td class="p-3 text-slate-500">${p.min_stock}</td>
+            <td class="p-3"><span class="px-2 py-1 text-xs bg-amber-100 text-amber-700 font-bold rounded-lg">Reabastecer</span></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // ==========================================
+    // 6. FUNCIONES DE GUARDADO Y EDICIÓN (CRUD)
+    // ==========================================
+
+    // Guarda o actualiza un producto en Supabase
+    async function guardarProducto(e) {
+      e.preventDefault();
+      const id = document.getElementById('prod-id').value;
+      const datos = {
+        sku: document.getElementById('prod-sku').value,
+        nombre: document.getElementById('prod-nombre').value,
+        categoria_id: document.getElementById('prod-categoria').value,
+        precio: parseFloat(document.getElementById('prod-precio').value),
+        min_stock: parseInt(document.getElementById('prod-min-stock').value),
+        stock: parseInt(document.getElementById('prod-stock').value)
+      };
+
+      if (id) {
+        await db.from('productos').update(datos).eq('id', id);
+      } else {
+        await db.from('productos').insert([datos]);
+      }
+
+      cerrarModales();
+      cargarProductos();
+    }
+
+    // Guarda o actualiza un proveedor en Supabase (Corregido: no requiere enviar el ID manual si es autoincrementable)
+    async function guardarProveedor(e) {
+      e.preventDefault();
+      const id = document.getElementById('prov-id').value;
+      const datos = {
+        nombre: document.getElementById('prov-nombre').value,
+        contacto: document.getElementById('prov-contacto').value,
+        telefono: document.getElementById('prov-telefono').value, // Cambiado a texto/string para aceptar códigos de área o símbolos
+        email: document.getElementById('prov-email').value,
+      };
+
+      if (id) {
+        await db.from('proveedores').update(datos).eq('id', id);
+      } else {
+        await db.from('proveedores').insert([datos]);
+      }
+
+      cerrarModales();
+      cargarProveedores();
+    }
+
+    // Registra una entrada o salida de inventario
+    async function guardarMovimiento(e) {
+      e.preventDefault();
+      const producto_id = parseInt(document.getElementById('mov-producto').value);
+      const tipo = document.getElementById('mov-tipo').value;
+      const cantidad = parseInt(document.getElementById('mov-cantidad').value);
+      const motivo = document.getElementById('mov-motivo').value;
+
+      const prod = productosGlobal.find(p => p.id === producto_id);
+      if (!prod) return;
+
+      let nuevoStock = tipo === 'ENTRADA' ? prod.stock + cantidad : prod.stock - cantidad;
+      if (nuevoStock < 0) return alert("¡No puedes sacar más stock del disponible!");
+
+      await db.from('movimientos').insert([{ producto_id, tipo, cantidad, motivo }]);
+      await db.from('productos').update({ stock: nuevoStock }).eq('id', producto_id);
+
+      cerrarModales();
+      cargarProductos();
+      cargarMovimientos();
+    }
+
+    // Elimina un producto de la base de datos
+    async function eliminarProducto(id) {
+      if (confirm("¿Estás seguro de eliminar este producto?")) {
+        await db.from('productos').delete().eq('id', id);
+        cargarProductos();
+      }
+    }
+
+    // Prepara el formulario modal para editar un producto existente
+    function editarProducto(id) {
+      const p = productosGlobal.find(x => x.id === id);
+      if (!p) return;
+
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-sku').value = p.sku;
+      document.getElementById('prod-nombre').value = p.nombre;
+      document.getElementById('prod-categoria').value = p.categoria_id;
+      document.getElementById('prod-precio').value = p.precio;
+      document.getElementById('prod-min-stock').value = p.min_stock;
+      document.getElementById('prod-stock').value = p.stock;
+
+      document.getElementById('modal-producto-titulo').innerText = "Editar Producto";
+      document.getElementById('modal-producto').classList.remove('hidden');
+    }
+
+    // Prepara el formulario modal para editar un proveedor existente
+    function editarProveedor(id) {
+      const p = proveedoresGlobal.find(x => x.id === id);
+      if (!p) return;
+
+      document.getElementById('prov-id').value = p.id;
+      document.getElementById('prov-nombre').value = p.nombre;
+      document.getElementById('prov-contacto').value = p.contacto;
+      document.getElementById('prov-telefono').value = p.telefono;
+      document.getElementById('prov-email').value = p.email;
+
+      document.getElementById('modal-proveedor-titulo').innerText = "Editar Proveedor";
+      document.getElementById('modal-proveedor').classList.remove('hidden');
+    }
+
+    // ==========================================
+    // 7. FUNCIONES DE FILTRADO Y BÚSQUEDA
+    // ==========================================
+
+    // Filtra la tabla de productos en tiempo real por nombre, SKU o categoría
+    function filtrarProductos() {
+      const busqueda = document.getElementById('buscar-producto').value.toLowerCase();
+      const categoria = document.getElementById('filtro-categoria').value;
+
+      const filtrados = productosGlobal.filter(p => {
+        const coincideNombre = p.nombre.toLowerCase().includes(busqueda) || p.sku.toLowerCase().includes(busqueda);
+        const coincideCategoria = categoria === "" || p.categoria_id == categoria;
+        return coincideNombre && coincideCategoria;
+      });
+
+      renderizarProductos(filtrados);
+    }
+
+    // Filtra la tabla de proveedores en tiempo real por nombre, contacto o email
+    function filtrarProveedores() {
+      const inputBusqueda = document.getElementById('buscar-proveedor');
+      if (!inputBusqueda) return; // Si no existe el input en el HTML, no hace nada
+
+      const busqueda = inputBusqueda.value.toLowerCase();
+
+      const filtrados = proveedoresGlobal.filter(p => {
+        const coincideNombre = p.nombre.toLowerCase().includes(busqueda);
+        const coincideContacto = p.contacto && p.contacto.toLowerCase().includes(busqueda);
+        const coincideEmail = p.email && p.email.toLowerCase().includes(busqueda);
+        return coincideNombre || coincideContacto || coincideEmail;
+      });
+
+      renderizarProveedores(filtrados);
+    }
+
+    // ==========================================
+    // 8. CONTROL DE INTERFAZ Y MODALES (UI)
+    // ==========================================
+
+    // Controla la navegación de pestañas (Tabs) en el menú lateral
+    function cambiarTab(tab) {
+      const tabs = ['dashboard', 'productos', 'movimientos', 'proveedores'];
+
+      tabs.forEach(t => {
+        const vista = document.getElementById(`vista-${t}`);
+        const btn = document.getElementById(`btn-tab-${t}`);
+        
+        if (vista) vista.classList.add('hidden');
+        if (btn) {
+          btn.classList.remove('bg-indigo-600', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+
+      const vistaActiva = document.getElementById(`vista-${tab}`);
+      const btnActivo = document.getElementById(`btn-tab-${tab}`);
+
+      if (vistaActiva) vistaActiva.classList.remove('hidden');
+      if (btnActivo) {
+        btnActivo.classList.add('bg-indigo-600', 'text-white');
+        btnActivo.classList.remove('text-slate-400');
+      }
+
+      if (tab === 'proveedores' && typeof cargarProveedores === 'function') {
+        cargarProveedores();
+      }
+    }
+
+    // Abre el modal para crear un nuevo producto
+    function abrirModalProducto() {
+      document.getElementById('form-producto').reset();
+      document.getElementById('prod-id').value = '';
+      document.getElementById('modal-producto-titulo').innerText = "Nuevo Producto";
+      document.getElementById('modal-producto').classList.remove('hidden');
+    }
+
+    // Abre el modal para crear un nuevo proveedor
+    function abrirModalProveedor() {
+      document.getElementById('form-proveedor').reset();
+      document.getElementById('prov-id').value = '';
+      document.getElementById('modal-proveedor-titulo').innerText = "Nuevo Proveedor";
+      document.getElementById('modal-proveedor').classList.remove('hidden');
+    }
+    // Abre el modal para crear un nuevo usuario
+function abrirModalCrear() {
+      document.getElementById('form-crear').reset();
+      document.getElementById('crea-id').value = '';
+      document.getElementById('modal-crear-usuario').innerText = "Creación de Usuario";
+      document.getElementById('modal-crea').classList.remove('hidden');
+   }
+
+    // Abre el modal para registrar entradas y salidas
+    function abrirModalMovimiento() {
+      document.getElementById('modal-movimiento').classList.remove('hidden');
+    }
+
+    // Cierra cualquier ventana modal activa
+    function cerrarModales() {
+      document.getElementById('modal-producto').classList.add('hidden');
+      document.getElementById('modal-movimiento').classList.add('hidden');
+      document.getElementById('modal-proveedor').classList.add('hidden');
+      document.getElementById('modal-crea').classList.add('hidden');
+      document.getElementById('modalClave')?.classList.add('hidden');
+      document.getElementById('modal-crea')?.classList.add('hidden');
+      document.getElementById('modalCerrarSesion')?.classList.add('hidden');
+
+    }
+
+
+    // Función para procesar el inicio de sesión
+async function procesarLogin(e) {
+  e.preventDefault();
+
+  const usuarioIngresado = document.getElementById('login-usuario').value.trim();
+  const claveIngresada = document.getElementById('login-clave').value.trim();
+
+  // Consultamos en la tabla 'usuarios' de Supabase
+  const { data, error } = await db
+    .from('usuarios')
+    .select('*')
+    .eq('usuario', usuarioIngresado)
+    .eq('clave', claveIngresada)
+    .single();
+
+  if (error || !data) {
+    alert('Usuario o contraseña incorrectos.');
+    return;
+  }
+
+  // Si los datos son correctos, ocultamos la pantalla de login y mostramos el sistema
+  document.getElementById('pantalla-login').classList.add('hidden');
+  
+  // Opcional: puedes guardar el usuario activo en sessionStorage si lo necesitas
+  sessionStorage.setItem('usuarioLogueado', data.nombre);
+  
+  // Inicializamos la app principal si no se había cargado antes
+  inicializarApp();
+}
+
+// Función para el botón cancelar del login (limpia los campos)
+function limpiarLogin() {
+  document.getElementById('form-login').reset();
+}
+// Abre el modal para cambiar la clave
+function abrirModalClave() {
+  const form = document.getElementById('form-cambiar-clave');
+  if (form) form.reset();
+
+  const modal = document.getElementById('modalClave');
+  if (modal) {
+    modal.classList.remove('hidden');
+  } else {
+    console.error("No se encontró el elemento con ID 'modalClave'");
+  }
+}
+
+// Procesa el cambio de clave validando el usuario y contraseña actual contra Supabase
+async function procesarCambioClave(e) {
+  e.preventDefault();
+
+  const usuario = document.getElementById('pass-usuario').value.trim();
+  const claveActual = document.getElementById('pass-actual').value.trim();
+  const claveNueva = document.getElementById('pass-nueva').value.trim();
+
+  // 1. Verificamos que el usuario y la contraseña actual existan en la tabla 'usuarios'
+  const { data, error } = await db
+    .from('usuarios')
+    .select('id')
+    .eq('usuario', usuario)
+    .eq('clave', claveActual)
+    .single();
+
+  if (error || !data) {
+    alert('El usuario o la contraseña actual son incorrectos.');
+    return;
+  }
+
+  // 2. Actualizamos con la nueva clave
+  const { error: errorUpdate } = await db
+    .from('usuarios')
+    .update({ clave: claveNueva })
+    .eq('id', data.id);
+
+  if (errorUpdate) {
+    alert('Error al actualizar la contraseña: ' + errorUpdate.message);
+    return;
+  }
+
+  alert('¡Contraseña actualizada con éxito!');
+  cerrarModales();
+}
+
+
+
+// Función para cerrar la sesión actual
+/*function cerrarSesion() {
+  // 1. Pregunta de confirmación al usuario (opcional)
+  const confirmar = confirm("¿Estás seguro de que deseas cerrar sesión?");
+  if (!confirmar) return;
+
+  // 2. Limpiamos los datos del usuario guardados en el navegador
+  sessionStorage.clear();
+  localStorage.removeItem('usuarioLogueado');
+
+  // 3. Cerramos cualquier modal abierto
+  if (typeof cerrarModales === 'function') {
+    cerrarModales();
+  }
+
+  // 4. Limpiamos el formulario de login si existe
+  const formLogin = document.getElementById('form-login');
+  if (formLogin) formLogin.reset();
+
+  // 5. Mostramos la pantalla de inicio de sesión
+  const pantallaLogin = document.getElementById('pantalla-login');
+  if (pantallaLogin) {
+    pantallaLogin.classList.remove('hidden');
+  } else {
+    console.error("No se encontró el elemento con ID 'pantalla-login'");
+  }
+}*/
+
+// Abre el modal de confirmación
+function abrirModalCerrarSesion() {
+  const modal = document.getElementById('modalCerrarSesion');
+  if (modal) modal.classList.remove('hidden');
+}
+
+// Ejecuta el cierre definitivo de la sesión
+function ejecutarCierreSesion() {
+  sessionStorage.clear();
+  localStorage.clear();
+
+  if (typeof cerrarModales === 'function') {
+    cerrarModales();
+  }
+
+  const formLogin = document.getElementById('form-login');
+  if (formLogin) formLogin.reset();
+
+  const pantallaLogin = document.getElementById('pantalla-login');
+  if (pantallaLogin) pantallaLogin.classList.remove('hidden');
+}
+  </script>
+</body>
+</html>
